@@ -7,5 +7,4 @@ router = routers.DefaultRouter()
 
 urlpatterns = [
     path ('news/', NewsView.as_view())
-    # path('',include(router.urls)),
 ]
