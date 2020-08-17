@@ -1,0 +1,33 @@
+
+<div class="container mt-3">
+
+  <form [formGroup]="forma">
+    <mat-form-field appearance="fill">
+      <mat-label>Enter a date range</mat-label>
+      <mat-date-range-input [rangePicker]="picker">
+        <input matStartDate placeholder="Start date" formControlName="dateStart">
+        <input matEndDate placeholder="End date" formControlName="dateEnd">
+      </mat-date-range-input>
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-date-range-picker #picker></mat-date-range-picker>
+    </mat-form-field>
+  </form>
+
+    <br>
+    <button (click)="generate()">generar</button>
+    <button (click)="filtro()">Filtrar noticias</button>
+
+    <div>
+      <h1>Noticias</h1>
+      <div class="card" *ngFor="let news of listNews">
+        <div class="card-header">
+          {{ news.country.name }}
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">{{ news.title }}</h5>
+          <p class="card-text">{{ news.headline }}</p>
+        </div>
+        <br>
+      </div>
+    </div>
+</div>
