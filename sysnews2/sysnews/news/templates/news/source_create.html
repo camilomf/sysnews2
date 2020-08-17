@@ -1,0 +1,30 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+{{ news.title }}
+{% endblock title %}
+
+{% block content %}
+
+  <h3 class="mt-2">
+    Agregar Fuente
+  </h3>
+  <form class="mt-2" method="post" action="{% url 'news:add_source' %}">{% csrf_token %}
+    <div class="form-group">
+        <label for="name_source">Nombre</label>
+        {{ form.name }}
+        {{ form.name.errors }}
+    </div>
+    <div style="margin-bottom: 42%;">
+        <button class="btn btn-primary form-control" type="submit" style="margin-bottom: 1%;">Guardar</button>
+        <a href="{% url 'news:create' %}" class="btn btn-success form-control">
+            Atrás
+        </a>
+    </div>
+
+  </form>
+  <hr>
+
+{% endblock content %}
+
+  

@@ -1,0 +1,329 @@
+{% extends 'core/base.html' %}
+{% load user_tags %}
+{% block title %}
+Home
+{% endblock title %}
+
+{% block content %}
+{% include 'news/includes/news_menu.html' %}
+<div class="row">
+
+  <!-- Blog Entries Column -->  
+  <div class="col-md-8">
+
+   <!-- Blog Post -->
+
+      {% if not list_news %}
+        <br>
+        <h3>No hay Resultados :( </h3>
+      {% else %}
+      {% for news in list_news %}
+      <div class="card mb-4 mt-3">
+      <img class="card-img-top" src="{{ news.image.url }}" alt="Card image cap">
+      <div class="card-body">
+        <h2 class="card-title">{{ news.title }}</h2>
+        <p class="card-text">{{ news.headline }}</p>
+        <a href="{% url 'news:detail' news.id news.title|slugify %}" class="btn btn-primary">Leer más &rarr;</a>
+      </div>
+      <div class="card-footer text-muted d-flex justify-content-between align-items-center">
+        <div>
+          Publicado el {{ news.publication_date }} por 
+          <a style="color: #009ee8;";>{{ news.editor.first_name }}</a> 
+        </div>
+        <div>
+          {% if request.user|has_group:'Editor' or request.user|has_group:'Admin' %}
+          {% if request.user == news.editor %}
+          <a href="{% url 'news:update' news.id %}"><button class="btn btn-warning">Editar</button></a>
+          <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#eliminar">Eliminar</button>
+          {% endif %}  
+          {% endif %}  
+        </div>
+      </div>
+      </div>
+
+      <!-- Eliminar -->
+      {% if request.user|has_group:'Editor' or request.user|has_group:'Admin' %}
+      <div id="eliminar" class="modal fade" role="dialog">
+      <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Noticia (delete)</h4>
+            <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form role="form" method="post" action="{% url 'news:delete' news.id %}">{% csrf_token %}
+            <div class="modal-body">
+              <p>¿Estás seguro de que quieres borrar la noticia {{ news.title }}?</p>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-danger"><span class="fa fa-save"></span> Sí</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      </div>
+      {% endif %}
+
+      {% endfor %}
+      {% endif %}
+  
+      {% if is_paginated %}
+      <ul class="pagination">
+    {% if page_obj.has_previous %}
+    <li>
+        <span><a href="?page={{ page_obj.previous_page_number }}">&larr; </a>&nbsp;</span>
+    </li>
+    {% endif %}
+    <li class="">
+        <span> Pág {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}. </span>
+    </li>
+    {% if page_obj.has_next %}
+    <li>
+        <span>&nbsp; <a href="?page={{ page_obj.next_page_number }}">&rarr;</a></span>
+    </li>
+    {% endif %}
+      </ul>
+      {% endif %}
+
+  </div>
+
+    
+  <!-- Sidebar Widgets Column -->
+  <div class="col-md-4">
+    
+    {% comment %}
+    <div class="card my-4">
+            <h5 class="card-header">Paises</h5>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-lg-6">
+                  <ul class="list-unstyled mb-0">
+                    {% for country in countries %}
+                    <li>
+                      <a href="#">{{ country.name }}</a>
+                    </li>  
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+    </div>   
+    <div class="card my-4">
+      <h5 class="card-header">Búsqueda por fecha</h5>
+      <div class="card-body">
+        <form method="POST" action="#">{% csrf_token %}         
+          <div class="input-group">
+            <input type="date" required name="date_conatins" class="form-control" placeholder="" value="">
+              <span class="glyphicon glyphicon-search"><i class="fas fa-search"></i></span></span>
+          </div>
+          </form>
+      </div>
+    </div>
+    {% endcomment %}
+    
+    <!-- Search Widget -->
+    <div class="card my-4">
+      <div class="card-body">
+        <h4>Búsqueda por</h4>
+      </div>
+      <form action="./search" method="GET">
+        <div class="form-row">
+          <div class="card-body">
+            <div class="input-group">
+              <input type="search" name="title_contains" class="form-control py-2 border-right-0 border" placeholder="Contenido en el titulo ..." value="">            
+                <span class="input-group-append">
+                  <div class="input-group-text bg-transparent">
+                    <i class="fa fa-search"></i>
+                  </div>
+                </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="card-body">
+            <h5>Fecha</h5>
+            <input type="text" name="daterange" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="card-body">
+            <h5>País</h5>
+            <select name="countries" id="id_countries" multiple="" placeholder="pais" class="form-control">
+
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="card-body">
+            <h5>Tag</h5>
+            <select name="tags" id="id_tags" multiple="" placeholder="pais" class="form-control">
+                
+            </select>
+          </div>
+        </div>
+
+
+        <div class="card-body">
+          <button type="submit" id="btn_search" class="form-control btn btn-primary">Buscar</button>
+        </div>
+      </form>
+
+    </div>
+
+  </div>
+</div>
+<!-- /.row -->
+{% endblock content %}
+
+{% block script %}
+
+<script>
+
+
+var bandC = true;
+var bandT = true;
+
+  $(document).ready(function(){
+    $('#id_countries').select2();
+    $('#id_tags').select2();
+    fillCountry();
+    fillTags();
+  });
+
+  function fillCountry(){
+    let dropdown = $('#id_countries');
+    dropdown.empty();
+
+    $.ajax({
+      url: '{% url "country_list" %}',
+      type: 'GET',
+      success: function(response){
+        $.each(response, function(key, entry){
+          dropdown.append($('<option></option>').attr('value', entry.id).text(entry.name));
+                });
+        $('#loading').text('Select Source');
+      }
+    });
+  }
+
+  function fillTags(){
+    let dropdown = $('#id_tags');
+    dropdown.empty();
+
+    $.ajax({
+      url: '{% url "news:tags_list" %}',
+      type: 'GET',
+      success: function(response){
+        $.each(response, function(key, entry){
+          dropdown.append($('<option></option>').attr('value', entry.id).text(entry.name));
+                });
+          
+        $('#loading').text('Select Source');
+      }
+    });
+  }
+
+  var a = $('#id_countries').val()
+  var b = $('#id_tags').val()
+
+  
+  $('#id_countries').change(function(){
+
+    var a = $('#id_countries').val()
+    var b = $('#id_tags').val()
+    console.log(a);
+    console.log(b);
+
+    if (a!='' && b==''){
+
+    let dropdownT = $('#id_tags');
+      $.ajax({
+      type:'GET',
+      url:'{% url "tag_by_country" %}',
+      data: {
+        'country[]': $('#id_countries').val()
+      },
+      success:function(jResults){
+        dropdownT.empty();
+        if (jResults == '' ){
+          fillTags();
+        }
+        else{
+          $.each(jResults, function(key, entry){
+          dropdownT.append($('<option></option>').attr('value', entry.id).text(entry.name));
+                });
+        }
+      },
+      error: function(data){
+        console.log(data);
+      }
+    });
+
+  }
+
+  });
+
+  $('#id_tags').change(function(){
+
+    var a = $('#id_countries').val()
+    var b = $('#id_tags').val()
+    console.log(a);
+    console.log(b);
+    
+    if(a=='' && b!='' ){
+
+    let dropdownT = $('#id_countries');
+      $.ajax({
+      type:'GET',
+      url:'{% url "country_by_tag" %}',
+      data: {
+        'tag[]': $('#id_tags').val()
+      },
+      success:function(jResults){
+        dropdownT.empty();
+        if(jResults == ''){
+          fillCountry();
+        }
+        else{
+          $.each(jResults, function(key, entry){
+          dropdownT.append($('<option></option>').attr('value', entry.id).text(entry.name));
+                });
+          console.log(bandT);
+        }
+      },
+      error: function(data){
+        console.log(data);
+      }
+    });
+
+  }
+
+  });
+
+  $(function() {
+    $('input[name="daterange"]').daterangepicker({
+      autoUpdateInput: false,
+      locale: {
+        applyLabel: 'Aplicar',
+        cancelLabel: 'Cancelar'
+      }
+    });
+    $('input[name="daterange"]').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+    });
+    $('input[name="daterange"]').on('cancel.daterangepicker', function(ev, picker) {
+      $(this).val('');
+    });
+  });
+  </script>
+
+  <script type="text/javascript">
+    $('.selectpicker').selectpicker({
+      });
+  </script>
+{% endblock script %}

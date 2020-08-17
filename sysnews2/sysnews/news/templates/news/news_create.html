@@ -1,0 +1,294 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+Agregar Noticia
+{% endblock title %}
+
+{% block content %}
+  <h3 class="mt-2">
+    Agregar Noticia
+  </h3>
+  <form id="addNews" class="mt-2" method="post" action="{% url 'news:create' %}" enctype="multipart/form-data">{% csrf_token %}
+    <div class="form-group">
+      <label for="tags">Tags</label>
+      <div class="row">
+        <div class="col-11">
+          <select name="tags" id="id_tags" multiple="" class="form-control">
+          </select>
+        </div>
+        <div class="col-1">
+          <button type="button" id="btnTags" class="btn btn-outline-success" data-toggle="modal" data-target="#tagsModal">
+            +
+          </button>
+        </div>
+      </div>
+    </div>
+      
+    
+      <div class="form-group">
+        <label for="fuente">Fuente</label>
+        <div class="row" id="source-div">
+          <div class="col-11">
+            <select name="source" id="id_source" class="form-control" required="required">
+              <option value="" id="loading">---------</option>
+            </select>
+          </div>
+          <div class="col-1">
+              <button type="button"  class="btn btn-outline-success" data-toggle="modal" data-target="#sourceModal">
+                +
+              </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="url">URL</label>
+        {{ form.url }}
+      </div>
+      <div class="form-group">
+        <label for="titulo">Título de la noticia</label>
+        {{ form.title }}
+      </div>
+      <div class="form-group">
+        <label for="imagen">Imagen</label>
+        {{ form.image }}
+      </div>
+      <div class="form-group">
+        <label for="encabezado">Encabezado de la noticia</label>
+      {{ form.headline }}
+      </div>
+      <div class="form-group">
+        <label for="cuerpo">Cuerpo de la noticia</label>
+        {{ form.explanation }}
+      </div>
+      <div class="form-group">
+        <label for="publication_date">Fecha de publicación</label>
+        <input type="date" name="publication_date" id="publication_date" class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="imagen">País</label>
+        {{ form.country }}
+      </div>
+      <button class="btn btn-primary form-control" type="submit">Guardar</button>
+  </form>
+  <hr>
+
+  <!-- modal source -->
+  <div class="modal fade" id="sourceModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Agregar Fuente</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="source-form" class="mt-2" method="post">{% csrf_token %}
+            <div class="form-group">
+              <label for="nombre">Nombre:</label>
+              <input type="text" id="name_source" class="form-control">
+            </div>
+            <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- modal tags -->
+  <div class="modal fade" id="tagsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Agregar Tags</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="tags-form" class="mt-2" method="post">{% csrf_token %}
+            <div class="form-group">
+              <label for="nombre">Nombre:</label>
+              <input type="text" id="name_tag" class="form-control">
+                <!-- {{ form_source.name }} -->
+            </div>
+            <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+
+{% block script %}
+<script>
+  //load page
+  $(document).ready(function(){
+    var bac = $("#id_tags").val();
+    tagslist(bac);
+    mostrar();
+    $('#id_source').select2();
+    $('#id_tags').select2();
+  });
+
+  //focus textbox modal
+  $('#sourceModal').on('shown.bs.modal', function () {
+      $("#name_source").val('');
+    $("#name_source").focus();
+  });
+
+  //Save Source
+  $('#source-form').submit(function(e){
+    var csrftoken = $("[name=csrfmiddlewaretoken]").val();
+    $.ajax({
+      type:'POST',
+      headers:{
+        "X-CSRFToken": csrftoken
+      },
+      url:'{% url "news:source_add" %}',
+      data: {
+        name:$('#name_source').val()
+      },
+      success:function(jResults){
+        alert("Fuente guardada exitosamente");
+        $('#name_source').val('');
+        $('#sourceModal').modal('hide')
+        mostrar();
+      },
+      error: function(data){
+        if (data.responseJSON.name!=""){
+          alert(data.responseJSON.name[0].message);
+        }
+      }
+    });
+    e.preventDefault();
+  });
+  
+  //fill select source
+  function mostrar(){
+    
+    let dropdown = $('#id_source');
+    dropdown.empty();
+
+    $.ajax({
+      url: '{% url "news:source_list" %}',
+      type: 'GET',
+      success: function(response){
+        // dropdown.append($('<option></option>').attr('value',null).text("select source"));
+        $.each(response, function(key, entry){
+          dropdown.append($('<option></option>').attr('value', entry.id).text(entry.name));
+                });
+        $('#loading').text('Select Source');
+      }
+    });
+  }
+
+  //save tags
+  $('#tags-form').submit(function(e){
+    var bac = $("#id_tags").val();
+    var csrftoken = $("[name=csrfmiddlewaretoken]").val();
+    $.ajax({
+      type:'POST',
+      headers:{
+        "X-CSRFToken": csrftoken
+      },
+      url:'{% url "news:tags_add" %}',
+      data: {
+        name:$('#name_tag').val()
+      },
+      success:function(jResults){
+        alert("Tag guardado exitosamente");
+        $('#name_tag').val('');
+        $('#tagsModal').modal('hide')
+        tagslist(bac);
+        let dropdownT = $('#id_tags');
+      },
+      error: function(data){
+        if (data.responseJSON.name!=""){
+          alert(data.responseJSON.name[0].message);
+        }
+      }
+    });
+    e.preventDefault();
+  });
+
+  //fill select tags
+  function tagslist(bac){
+    let dropdownT = $('#id_tags');
+    dropdownT.empty();
+    console.log(bac);
+    $.ajax({
+      url: '{% url "news:tags_list" %}',
+      type: 'GET',
+      success: function(response){
+        if (bac==""){
+          $.each(response, function(key, entry){
+          // console.log("valor: "+element);
+          dropdownT.append($('<option></option>').attr('value', entry.id).text(entry.name));
+          });
+        }
+        else{
+          // bac.forEach(element => {
+          for (var i = 0; i < bac.length ; i++) {
+            $.each(response, function(key, entry){
+              if (i<=bac.length){
+                if(bac[i] == entry.id){
+                  dropdownT.append($('<option selected></option>').attr('value', entry.id).text(entry.name));
+                  i=i+1;
+                }
+                else{
+                  dropdownT.append($('<option></option>').attr('value', entry.id).text(entry.name));
+                }
+              }
+              else{
+                dropdownT.append($('<option></option>').attr('value', entry.id).text(entry.name));
+              }
+            });
+          }
+        }
+        
+        $('#loading').text('Select Source');
+      }
+    });
+  }
+
+  $('#btnTasags').on('click',function(){
+    var bac = $("#id_tags").val();
+    console.log(bac);
+  })
+  
+  function setInputDate(_id){
+    var _dat = document.querySelector(_id);
+    var hoy = new Date(),
+        d = hoy.getDate(),
+        m = hoy.getMonth()+1, 
+        y = hoy.getFullYear(),
+        data;
+
+    if(d < 10){
+        d = "0"+d;
+    };
+    if(m < 10){
+        m = "0"+m;
+    };
+
+    data = y+"-"+m+"-"+d;
+    // console.log(data);
+    _dat.value = data;
+  };
+  // setInputDate("#calendar");
+  setInputDate("#publication_date");
+  </script>
+<script>
+  
+</script>
+{% endblock script %}
+  
